@@ -36,11 +36,11 @@ object Main extends App {
 
   OParser.parse(parser, args, Config(null, 1, None)) match {
     case Some(conf) => app(conf)
-    case _          =>
+    case _ =>
   }
 
   def app(conf: Config): Unit = {
-    println(conf)
+
   }
 
 }
