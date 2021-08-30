@@ -2,10 +2,12 @@ package io.github.edadma.enums
 
 import scopt.OParser
 
+import io.github.edadma.mustache._
+
 import java.io.File
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object Main extends App {
   case class Config(file: File, start: Int, end: Option[Int])
@@ -43,11 +45,57 @@ object Main extends App {
   }
 
   def app(conf: Config): Unit = {
-    val lines           = util.Using(scala.io.Source.fromFile(conf.file.getPath))(_.getLines() to ArraySeq map (_ :+ '\n')).get
-    val section         = lines dropRight (lines.length - conf.end.getOrElse(0)) drop (conf.start - 1)
-    val (defines, text) = preprocess(section)
-    val ast             = EnumsParser.parseHeader(text mkString)
+    val lines                       = util.Using(scala.io.Source.fromFile(conf.file.getPath))(_.getLines() to ArraySeq).get
+    val section                     = lines dropRight (lines.length - conf.end.getOrElse(0)) drop (conf.start - 1)
+    val (defines, text)             = preprocess(section)
+    val EnumsDeclarationsAST(enums) = EnumsParser.parseHeader(text mkString)
+    var nonames: Int                = 0
+    val list                        = new ListBuffer[(String, List[Map[String, String]])]
 
+    for (EnumDeclarationAST(name, constants) <- enums) {
+      val enumname =
+        if (name.isDefined) name.get.s
+        else {
+          nonames += 1
+          s"_$nonames"
+        }
+
+      list += (enumname -> enumContants(enumname, constants))
+    }
+
+    val data = Map("enums" -> list.map { case (e, cs) => Map("name" -> e, "constants" -> cs) }.toList)
+
+    val template =
+      """
+        |{{#enums}}
+        |class {{name}}(val value: CInt) extends AnyVal
+        |object {{name}} {
+        |{{#constants}}
+        |  final val {{name}} = new {{enum}}({{value}})
+        |{{/constants}}
+        |}
+        |
+        |{{/enums}}
+        |""".trim.stripMargin
+
+    println(processMustache(data, template, "trim" -> false, "removeNonSectionBlanks" -> false))
+  }
+
+  def enumContants(enum: String, constants: List[EnumConstant]): List[Map[String, String]] = {
+    var next: Int = 0
+    val buf       = new ListBuffer[(String, String)]
+
+    for (EnumConstant(Ident(_, name), value) <- constants) {
+      val intvalue =
+        if (value.isDefined)
+          if (value.get startsWith "0x") Integer.parseInt(value.get.substring(2), 16) else value.get.toInt
+        else next
+
+      next = intvalue + 1
+      buf += (name -> intvalue.toString)
+    }
+
+    buf map { case (n, v) => Map("enum" -> enum, "name" -> n, "value" -> v) } toList
   }
 
   def preprocess(lines: Seq[String]): (Map[String, String], Seq[String]) = {
@@ -55,14 +103,13 @@ object Main extends App {
     val buf             = new ArrayBuffer[String]
     val defineDirective = """#define\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.*)""".r
 
-    for (l <- lines) {
+    for (l <- lines)
       l.trim match {
         case defineDirective(name, definition) => defines(name) = definition
         case s                                 => buf += s
       }
-    }
 
-    (defines.toMap, buf to ArraySeq)
+    (defines.toMap, buf map (_ :+ '\n') to ArraySeq)
   }
 
 }

@@ -20,8 +20,8 @@ object EnumsParser extends RegexParsers with PackratParsers {
     case _ ~ n ~ _ ~ cs ~ _ ~ _ => EnumDeclarationAST(n, cs)
   }
 
-  lazy val enumConstant: PackratParser[Constant] = ident ~ opt("=" ~> value) ^^ {
-    case p ~ v => Constant(p, v)
+  lazy val enumConstant: PackratParser[EnumConstant] = ident ~ opt("=" ~> value) ^^ {
+    case p ~ v => EnumConstant(p, v)
   }
 
   lazy val value: PackratParser[String] = """0x[0-9a-fA-F]+|[0-9]+""".r ^^ identity
