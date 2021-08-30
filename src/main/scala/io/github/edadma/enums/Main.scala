@@ -84,15 +84,19 @@ object Main extends App {
   def enumContants(enum: String, constants: List[EnumConstant]): List[Map[String, String]] = {
     var next: Int = 0
     val buf       = new ListBuffer[(String, String)]
+    var hex       = false
 
     for (EnumConstant(Ident(_, name), value) <- constants) {
-      val intvalue =
-        if (value.isDefined)
-          if (value.get startsWith "0x") Integer.parseInt(value.get.substring(2), 16) else value.get.toInt
-        else next
+      if (value.isDefined)
+        hex = value.get startsWith "0x"
 
-      next = intvalue + 1
-      buf += (name -> intvalue.toString)
+      if (value.isDefined)
+        next = Integer.parseInt(value.get.substring(if (hex) 2 else 0), if (hex) 16 else 10)
+
+      val const = if (hex) s"0x${next.toHexString}" else next.toString
+
+      next += 1
+      buf += (name -> const)
     }
 
     buf map { case (n, v) => Map("enum" -> enum, "name" -> n, "value" -> v) } toList
