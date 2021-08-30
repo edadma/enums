@@ -3,6 +3,9 @@ package io.github.edadma.enums
 import scopt.OParser
 
 import java.io.File
+import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object Main extends App {
   case class Config(file: File, start: Int, end: Option[Int])
@@ -36,11 +39,30 @@ object Main extends App {
 
   OParser.parse(parser, args, Config(null, 1, None)) match {
     case Some(conf) => app(conf)
-    case _ =>
+    case _          =>
   }
 
   def app(conf: Config): Unit = {
+    val lines           = util.Using(scala.io.Source.fromFile(conf.file.getPath))(_.getLines() to ArraySeq map (_ :+ '\n')).get
+    val section         = lines dropRight (lines.length - conf.end.getOrElse(0)) drop (conf.start - 1)
+    val (defines, text) = preprocess(section)
+    val ast             = EnumsParser.parseHeader(text mkString)
 
+  }
+
+  def preprocess(lines: Seq[String]): (Map[String, String], Seq[String]) = {
+    val defines         = mutable.HashMap[String, String]()
+    val buf             = new ArrayBuffer[String]
+    val defineDirective = """#define\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.*)""".r
+
+    for (l <- lines) {
+      l.trim match {
+        case defineDirective(name, definition) => defines(name) = definition
+        case s                                 => buf += s
+      }
+    }
+
+    (defines.toMap, buf to ArraySeq)
   }
 
 }
