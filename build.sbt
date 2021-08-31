@@ -1,6 +1,6 @@
 name := "enums"
 
-version := "0.1.1"
+version := "0.1.0"
 
 scalaVersion := "2.13.6"
 
@@ -48,7 +48,7 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "io.github.edadma" %%% "mustache" % "0.1.7"
+  "io.github.edadma" %%% "mustache" % "0.1.8"
 )
 
 publishMavenStyle := true
