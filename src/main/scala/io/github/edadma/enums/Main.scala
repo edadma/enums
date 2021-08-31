@@ -60,7 +60,7 @@ object Main extends App {
           s"_$nonames"
         }
 
-      list += (enumname -> enumContants(enumname, constants))
+      list += (enumname -> enumConstants(enumname, constants))
     }
 
     val data = Map("enums" -> list.map { case (e, cs) => Map("name" -> e, "constants" -> cs) }.toList)
@@ -81,7 +81,7 @@ object Main extends App {
     println(processMustache(data, template, "trim" -> false, "removeNonSectionBlanks" -> false))
   }
 
-  def enumContants(enum: String, constants: List[EnumConstant]): List[Map[String, String]] = {
+  def enumConstants(enum: String, constants: List[EnumConstant]): List[Map[String, String]] = {
     var next: Int = 0
     val buf       = new ListBuffer[(String, String)]
     var hex       = false
