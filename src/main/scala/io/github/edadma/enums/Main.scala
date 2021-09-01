@@ -1,7 +1,7 @@
 package io.github.edadma.enums
 
+import io.github.edadma.json
 import scopt.OParser
-
 import io.github.edadma.mustache._
 
 import java.io.File
@@ -50,7 +50,7 @@ object Main extends App {
     val (defines, text)             = preprocess(section)
     val EnumsDeclarationsAST(enums) = EnumsParser.parseHeader(text mkString)
     var nonames: Int                = 0
-    val list                        = new ListBuffer[(String, List[Map[String, String]])]
+    val list                        = new ListBuffer[(String, json.Array)]
 
     for (EnumDeclarationAST(name, constants) <- enums) {
       val enumname =
@@ -63,7 +63,9 @@ object Main extends App {
       list += (enumname -> enumConstants(enumname, constants))
     }
 
-    val data = Map("enums" -> list.map { case (e, cs) => Map("name" -> e, "constants" -> cs) }.toList)
+    val data = json.Object("enums" -> json.Array(list.map {
+      case (e, cs) => json.Object("name" -> e, "constants" -> cs)
+    }))
 
     val template =
       """
@@ -71,7 +73,7 @@ object Main extends App {
         |class {{name}}(val value: CInt) extends AnyVal
         |object {{name}} {
         |{{#constants}}
-        |  final val {{name}} = new {{enum}}({{value}})
+        |  final val {{name}} = new {{_._.name}}({{value}})
         |{{/constants}}
         |}
         |
@@ -81,7 +83,7 @@ object Main extends App {
     println(processMustache(data, template, "trim" -> false, "removeNonSectionBlanks" -> false))
   }
 
-  def enumConstants(enum: String, constants: List[EnumConstant]): List[Map[String, String]] = {
+  def enumConstants(enum: String, constants: List[EnumConstant]): json.Array = {
     var next: Int = 0
     val buf       = new ListBuffer[(String, String)]
     var hex       = false
@@ -99,7 +101,7 @@ object Main extends App {
       buf += (name -> const)
     }
 
-    buf map { case (n, v) => Map("enum" -> enum, "name" -> n, "value" -> v) } toList
+    json.Array(buf map { case (n, v) => json.Object("name" -> n, "value" -> v) })
   }
 
   def preprocess(lines: Seq[String]): (Map[String, String], Seq[String]) = {

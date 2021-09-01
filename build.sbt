@@ -48,7 +48,7 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "io.github.edadma" %%% "mustache" % "0.1.8"
+  "io.github.edadma" %%% "mustache" % "0.1.12"
 )
 
 publishMavenStyle := true
