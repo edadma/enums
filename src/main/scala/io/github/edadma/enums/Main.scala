@@ -1,8 +1,9 @@
 package io.github.edadma.enums
 
 import io.github.edadma.json
-import scopt.OParser
 import io.github.edadma.mustache._
+
+import scopt.OParser
 
 import java.io.File
 import scala.collection.immutable.ArraySeq
