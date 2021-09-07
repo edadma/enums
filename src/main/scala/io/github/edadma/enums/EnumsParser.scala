@@ -16,8 +16,8 @@ object EnumsParser extends RegexParsers with PackratParsers {
     rep(enum) ^^ EnumsDeclarationsAST
 
   lazy val enum: PackratParser[EnumDeclarationAST] =
-    kw("enum") ~ opt(ident) ~ "{" ~ repsep(enumConstant, ",") ~ opt(",") ~ "}" ~ ";" ^^ {
-      case _ ~ n ~ _ ~ cs ~ _ ~ _ ~ _ => EnumDeclarationAST(n, cs)
+    opt(kw("typedef")) ~> kw("enum") ~> opt(ident) ~ "{" ~ repsep(enumConstant, ",") <~ opt(",") <~ "}" <~ opt(ident) <~ ";" ^^ {
+      case n ~ _ ~ cs => EnumDeclarationAST(n, cs)
     }
 
   lazy val enumConstant: PackratParser[EnumConstant] =
@@ -26,7 +26,7 @@ object EnumsParser extends RegexParsers with PackratParsers {
     }
 
   lazy val value: PackratParser[String] =
-    """0x[0-9a-fA-F]+|[0-9]+""".r ^^ identity
+    """0x[0-9a-fA-F]+|-?[0-9]+""".r ^^ identity
 
   lazy val ident: PackratParser[Ident] =
     pos ~ "[a-zA-Z_][a-zA-Z0-9_]*".r ^^ {
