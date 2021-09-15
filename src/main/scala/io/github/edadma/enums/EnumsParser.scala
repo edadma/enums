@@ -16,8 +16,8 @@ object EnumsParser extends RegexParsers with PackratParsers {
     rep(enum) ^^ EnumsDeclarationsAST
 
   lazy val enum: PackratParser[EnumDeclarationAST] =
-    opt(kw("typedef")) ~> kw("enum") ~> opt(ident) ~ "{" ~ repsep(enumConstant, ",") <~ opt(",") <~ "}" <~ opt(ident) <~ ";" ^^ {
-      case n ~ _ ~ cs => EnumDeclarationAST(n, cs)
+    opt(kw("typedef")) ~> kw("enum") ~> opt(ident) ~ ("{" ~> repsep(enumConstant, ",") <~ opt(",") <~ "}") ~ opt(ident) <~ ";" ^^ {
+      case en ~ cs ~ tn => EnumDeclarationAST(if (tn.isDefined) tn else en, cs)
     }
 
   lazy val enumConstant: PackratParser[EnumConstant] =

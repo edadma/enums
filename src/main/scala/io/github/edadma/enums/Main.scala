@@ -71,7 +71,7 @@ object Main extends App {
     val template =
       """
         |{{#enums}}
-        |class {{name}}(val value: CInt) extends AnyVal
+        |implicit class {{name}}(val value: {{name}}) extends AnyVal
         |object {{name}} {
         |{{#constants}}
         |  final val {{name}} = new {{_._.name}}({{value}})
