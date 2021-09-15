@@ -99,7 +99,25 @@ object Main extends App {
       val const = if (hex) s"0x${next.toHexString}" else next.toString
 
       next += 1
-      buf += (name -> const)
+
+      val newname =
+        enum indexOf '_' match {
+          case -1 => name
+          case idx if idx != enum.length - 2 =>
+            val prefix = idx + 1
+            val suffix =
+              if (enum.endsWith("_t") || enum.endsWith("_e")) {
+                val last = enum dropRight 2 lastIndexOf '_'
+
+                if (last == idx) 0
+                else enum.length - last - 2
+              } else 0
+
+            name drop prefix dropRight suffix
+          case _ => name
+        }
+
+      buf += (newname -> const)
     }
 
     json.Array(buf map { case (n, v) => json.Object("name" -> n, "value" -> v) })
